@@ -1,6 +1,10 @@
+import type { Move, Player } from "./types";
+import type Store from "./store";
+
 class View {
-  $ = {};
-  $$ = {};
+
+  $: Record<string, Element> = {};
+  $$: Record<string, NodeListOf<Element>> = {};
 
   constructor() {
     this.$.menu = this.#qs('[data-id="menu"');
@@ -37,20 +41,20 @@ class View {
    * ----------------------------------------------------------
    */
 
-  bindGameResetEvent(handler) {
+  bindGameResetEvent(handler: EventListener) {
     this.$.resetBtn.addEventListener('click', handler);
     this.$.modalBtn.addEventListener('click', handler);
   }
 
-  bindNewRoundEvent(handler) {
+  bindNewRoundEvent(handler: EventListener) {
     this.$.newRoundBtn.addEventListener('click', handler);
   }
 
-  bindPlayerMoveEvent(handler) {
+  bindPlayerMoveEvent(handler: EventListener) {
     this.#delegate(this.$.grid, '[data-id="square"]', 'click', handler);
   }
 
-  render(game, stats) {
+  render(game: Store['game'], stats: Store['stats']) {
     const { playerWithStats, ties } = stats;
     const {
       moves,
@@ -79,15 +83,15 @@ class View {
    * -----------------------------------------------------------------------------
    */
 
-  #updateScorebord(p1Wins, p2Wins, ties) {
-    this.$.p1Wins.innerText = `${p1Wins} Wins`;
-    this.$.p2Wins.innerText = `${p2Wins} Wins`;
-    this.$.ties.innerText = `${ties} Ties`;
+  #updateScorebord(p1Wins: number, p2Wins: number, ties: number) {
+    this.$.p1Wins.textContent = `${p1Wins} Wins`;
+    this.$.p2Wins.textContent = `${p2Wins} Wins`;
+    this.$.ties.textContent = `${ties} Ties`;
   }
 
-  #openModal(message) {
+  #openModal(message: string) {
     this.$.modal.classList.remove('hidden');
-    this.$.modalText.innerText = message;
+    this.$.modalText.textContent = message;
   }
 
   #closeAll() {
@@ -99,7 +103,7 @@ class View {
     this.$$.squares.forEach((square) => square.replaceChildren());
   }
 
-  #initializeMoves(moves) {
+  #initializeMoves(moves: Move[]) {
     this.$$.squares.forEach((square) => {
       const existingMoves = moves.find((move) => move.squareId === +square.id);
       if (existingMoves) {
@@ -116,7 +120,7 @@ class View {
     this.$.menuItems.classList.add('hidden');
     this.$.menuBtn.classList.remove('border');
 
-    const icon = this.$.menuBtn.querySelector('i');
+    const icon = this.#qs('i', this.$.menuBtn);
 
     icon.classList.add('fa-chevron-down');
     icon.classList.remove('fa-chevron-up');
@@ -126,19 +130,19 @@ class View {
     this.$.menuItems.classList.toggle('hidden');
     this.$.menuBtn.classList.toggle('border');
 
-    const icon = this.$.menuBtn.querySelector('i');
+    const icon = this.#qs('i', this.$.menuBtn);
 
     icon.classList.toggle('fa-chevron-down');
     icon.classList.toggle('fa-chevron-up');
   }
 
-  #handlePlayerMove(squareEl, player) {
+  #handlePlayerMove(squareEl: Element, player: Player) {
     const icon = document.createElement('i');
     icon.classList.add('fa-solid', player.iconClass, player.colorClass);
     squareEl.replaceChildren(icon);
   }
 
-  #setTurnIndicator(player) {
+  #setTurnIndicator(player: Player) {
     const icon = document.createElement('i');
     const label = document.createElement('p');
 
@@ -150,7 +154,7 @@ class View {
     this.$.turn.replaceChildren(icon, label);
   }
 
-  #qs(selector, parent) {
+  #qs(selector: string, parent?: Element) {
     const element = parent
       ? parent.querySelector(selector)
       : document.querySelector(selector);
@@ -161,7 +165,7 @@ class View {
     return element;
   }
 
-  #qsAll(selector) {
+  #qsAll(selector: string) {
     const elementsList = document.querySelectorAll(selector);
 
     if (!elementsList) {
@@ -179,8 +183,18 @@ class View {
    * @param {*} eventKey the event type you are listening for (e.g. "click" event)
    * @param {*} handler the callback function that is executed when the specified event is triggered on the specified children
    */
-  #delegate(el, selector, eventKey, handler) {
+  #delegate(
+    el: Element,
+    selector: string,
+    eventKey: string,
+    handler: (el: Element) => void
+  ) {
     el.addEventListener(eventKey, (event) => {
+
+      if (!(event.target instanceof Element)) {
+        throw new Error('Event target not found!');
+      }
+
       if (event.target.matches(selector)) {
         handler(event.target);
       }
