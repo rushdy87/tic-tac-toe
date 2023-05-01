@@ -50,7 +50,7 @@ class View {
     this.$.newRoundBtn.addEventListener('click', handler);
   }
 
-  bindPlayerMoveEvent(handler: EventListener) {
+  bindPlayerMoveEvent(handler: (el: Element) => void) {
     this.#delegate(this.$.grid, '[data-id="square"]', 'click', handler);
   }
 
